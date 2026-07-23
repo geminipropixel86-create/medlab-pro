@@ -1,8 +1,10 @@
 # ─── Render Blueprint ─────────────────────────────────────
 # Deploy: https://dashboard.render.com/blueprints
 # 1. Push this repo to GitHub
-# 2. Go to Render Dashboard → Blueprint → Connect repo
-# 3. Fill in the env var values when prompted
+# 2. Go to Render Dashboard → Blueprint → Connect repo (medlab-pro)
+# 3. Render reads this file and auto-creates PostgreSQL + Web Service
+# 4. During deploy, set the CORS_ORIGINS and verify JWT_SECRET
+# 5. After deploy, run migrations via Render Shell or manually
 
 databases:
   - name: medlab-pro-db
@@ -31,6 +33,7 @@ services:
         value: "3000"
       - key: API_PREFIX
         value: api/v1
+      # PostgreSQL — auto-linked from the database created above
       - key: DB_HOST
         fromDatabase:
           name: medlab-pro-db
@@ -51,10 +54,14 @@ services:
         fromDatabase:
           name: medlab-pro-db
           property: database
+      # JWT — a strong random value is auto-generated.
+      # You can replace it with your own in the Render dashboard.
       - key: JWT_SECRET
         generateValue: true
+      # CORS — UPDATE THIS with your actual frontend URLs after deploy.
+      # Example: https://medlab-dashboard.vercel.app,https://medlab-website.vercel.app
       - key: CORS_ORIGINS
-        value: https://your-dashboard.vercel.app,https://your-website.vercel.app
+        value: https://localhost:5173,https://localhost:3001
       - key: STORAGE_TYPE
         value: local
       - key: THROTTLE_TTL

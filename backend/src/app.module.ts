@@ -42,7 +42,7 @@ import { NewsModule } from './modules/news/news.module';
         database: config.get('DB_DATABASE', 'medlab_pro'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
-        synchronize: config.get('NODE_ENV') !== 'production',
+        synchronize: config.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: config.get('NODE_ENV') === 'development',
         ssl: config.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
 
