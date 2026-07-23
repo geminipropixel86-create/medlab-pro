@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medlab-api
+  namespace: medlab-pro
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: medlab-api
+  template:
+    metadata:
+      labels:
+        app: medlab-api
+    spec:
+      containers:
+        - name: api
+          image: medlab-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: medlab-secrets
+                  key: db-username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: medlab-secrets
+                  key: db-password
+            - name: DB_DATABASE
+              value: "medlab_pro"
+            - name: REDIS_HOST
+              value: "redis-service"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: medlab-secrets
+                  key: jwt-secret
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/reports/dashboard
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/v1/reports/dashboard
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medlab-dashboard
+  namespace: medlab-pro
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: medlab-dashboard
+  template:
+    metadata:
+      labels:
+        app: medlab-dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: medlab-dashboard:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medlab-api-service
+  namespace: medlab-pro
+spec:
+  selector:
+    app: medlab-api
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medlab-dashboard-service
+  namespace: medlab-pro
+spec:
+  selector:
+    app: medlab-dashboard
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: medlab-ingress
+  namespace: medlab-pro
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.medlabpro.com
+        - admin.medlabpro.com
+      secretName: medlab-tls
+  rules:
+    - host: api.medlabpro.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: medlab-api-service
+                port:
+                  number: 3000
+    - host: admin.medlabpro.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: medlab-dashboard-service
+                port:
+                  number: 80
