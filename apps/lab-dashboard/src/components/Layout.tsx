@@ -1,20 +1,32 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useLanguage, Language } from '../i18n/LanguageContext';
+
+const languages: { code: Language; label: string; flag: string }[] = [
+  { code: 'en', label: 'EN', flag: '🇬🇧' },
+  { code: 'ar', label: 'AR', flag: '🇸🇦' },
+  { code: 'ckb', label: 'CKB', flag: '🏳️' },
+  { code: 'kmr', label: 'KMR', flag: '🏳️' },
+];
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { to: '/patients', label: 'Patients', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
-  { to: '/tests', label: 'Lab Tests', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
-  { to: '/results', label: 'Results', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { to: '/pricing', label: 'Pricing', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { to: '/reports', label: 'Reports', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  { path: '/', label: 'nav.dashboard', icon: '📊' },
+  { path: '/patients', label: 'nav.patients', icon: '👥' },
+  { path: '/tests', label: 'nav.tests', icon: '🔬' },
+  { path: '/results', label: 'nav.results', icon: '📋' },
+  { path: '/pricing', label: 'nav.pricing', icon: '💰' },
+  { path: '/packages', label: 'nav.packages', icon: '📦' },
+  { path: '/news', label: 'nav.news', icon: '📢' },
+  { path: '/reports', label: 'nav.reports', icon: '📈' },
 ];
 
 export default function Layout() {
   const { user, logout } = useAuthStore();
+  const { t, lang, setLang, dir } = useLanguage();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -22,75 +34,127 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden" dir={dir}>
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform lg:static lg:inset-auto`}>
-        <div className="flex items-center gap-3 px-6 h-16 border-b">
-          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">ML</span>
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-800
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:relative lg:translate-x-0 lg:flex-shrink-0
+        shadow-2xl
+      `}>
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
+          <div className="text-3xl animate-pulse">🔬</div>
+          <div>
+            <h1 className="text-xl font-bold text-white tracking-tight">{t('app.title')}</h1>
+            <p className="text-xs text-indigo-300">{t('app.subtitle')}</p>
           </div>
-          <span className="font-semibold text-gray-900">MedLab Pro</span>
         </div>
 
-        <nav className="p-4 space-y-1">
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
+              key={item.path}
+              to={item.path}
+              end={item.path === '/'}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `sidebar-link ${isActive ? 'sidebar-link-active' : 'sidebar-link-inactive'}`
+                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-white/15 text-white shadow-lg shadow-indigo-500/20 border border-white/10'
+                    : 'text-indigo-200 hover:bg-white/10 hover:text-white'
+                }`
               }
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
-              </svg>
-              {item.label}
+              <span className="text-lg">{item.icon}</span>
+              <span>{t(item.label)}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-              <span className="text-primary-700 font-medium text-sm">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
-              </span>
+        {/* User & Language */}
+        <div className="border-t border-white/10 p-4 space-y-3">
+          {/* Language Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition-colors"
+            >
+              <span>{languages.find(l => l.code === lang)?.flag}</span>
+              <span>{languages.find(l => l.code === lang)?.label}</span>
+              <span className="ml-auto text-xs opacity-70">▼</span>
+            </button>
+            {langDropdownOpen && (
+              <div className="absolute bottom-full mb-1 left-0 right-0 bg-indigo-800 border border-white/10 rounded-lg shadow-xl overflow-hidden">
+                {languages.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => { setLang(l.code); setLangDropdownOpen(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
+                      lang === l.code ? 'bg-white/20 text-white' : 'text-indigo-200 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>{l.flag}</span>
+                    <span>{l.label}</span>
+                    <span className="text-xs opacity-60 ml-1">{t(`common.lang${l.code === 'en' ? 'En' : l.code === 'ar' ? 'Ar' : l.code === 'ckb' ? 'Ckb' : 'Kmr'}`)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* User Info */}
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+              {user?.firstName?.[0] || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-xs text-gray-500 capitalize">{user?.role?.replace('_', ' ')}</p>
+              <p className="text-sm font-medium text-white truncate">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-indigo-300 truncate">{user?.email}</p>
             </div>
-            <button onClick={handleLogout} className="text-gray-400 hover:text-gray-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+            <button
+              onClick={handleLogout}
+              className="text-indigo-300 hover:text-white transition-colors text-lg"
+              title={t('nav.logout')}
+            >
+              ⏻
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/20 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Main */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b flex items-center px-6 gap-4 lg:gap-6">
-          <button className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <div className="flex-1" />
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+        {/* Top Bar */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 lg:hidden">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+            >
+              ☰
+            </button>
+            <h1 className="text-lg font-bold text-indigo-900">{t('app.title')}</h1>
+            <div className="flex items-center gap-2">
+              {languages.slice(0, 2).map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => setLang(l.code)}
+                  className={`text-xs px-2 py-1 rounded ${
+                    lang === l.code ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-6">
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gradient-to-br from-gray-50 via-indigo-50/30 to-purple-50/30">
           <Outlet />
         </main>
       </div>

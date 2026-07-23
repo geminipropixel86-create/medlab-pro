@@ -2,249 +2,181 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/test_provider.dart';
-import '../models/user.dart';
+import '../l10n/l10n.dart';
+import '../main.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = context.read<AuthProvider>();
-      if (auth.token != null) {
-        context.read<TestProvider>().fetchTests(auth.token!);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final screens = [
-      _DashboardTab(),
-      _TestsTab(),
-      _ProfileTab(),
-    ];
-
-    return Scaffold(
-      body: screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.science_outlined), selectedIcon: Icon(Icons.science), label: 'Tests'),
-          NavigationDestination(icon: Icon(Icons.person_outlined), selectedIcon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    );
-  }
-}
-
-class _DashboardTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final theme = Theme.of(context);
+    final auth = Provider.of<AuthProvider>(context);
+    final locale = MedLabApp.of(context);
+    final lang = locale._locale.languageCode;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Hello, ${auth.user?.firstName ?? ''}'),
+        title: Text(L10n.t('welcome', lang)),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.translate),
+            onPressed: () => _showLanguagePicker(context, locale),
+          ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Quick Stats
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [Colors.indigo, Colors.purple]),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text('Your Health Summary', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _StatItem(icon: Icons.pending_actions, label: 'Pending', value: '0', color: Colors.orange),
-                      _StatItem(icon: Icons.science, label: 'In Progress', value: '0', color: Colors.blue),
-                      _StatItem(icon: Icons.check_circle, label: 'Completed', value: '0', color: Colors.green),
-                    ],
+                  const CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person, color: Colors.indigo, size: 28),
                   ),
+                  const SizedBox(height: 8),
+                  Text(auth.user?.firstName ?? 'User', style: const TextStyle(color: Colors.white, fontSize: 16)),
+                  Text(auth.user?.email ?? '', style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // Recent Tests
-          Text('Recent Tests', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Consumer<TestProvider>(
-            builder: (ctx, tp, _) {
-              if (tp.loading) return const Center(child: CircularProgressIndicator());
-              if (tp.tests.isEmpty) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.science_outlined, size: 48, color: Colors.grey[400]),
-                          const SizedBox(height: 8),
-                          Text('No tests yet', style: TextStyle(color: Colors.grey[600])),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-              return Column(
-                children: tp.tests.take(5).map((t) => ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: t.status == 'completed' ? Colors.green[100] : Colors.orange[100],
-                    child: Icon(
-                      t.status == 'completed' ? Icons.check_circle : Icons.pending,
-                      color: t.status == 'completed' ? Colors.green : Colors.orange,
-                    ),
-                  ),
-                  title: Text(t.testName),
-                  subtitle: Text('${t.status.replaceAll('_', ' ').toUpperCase()} - ${t.orderedDate.toLocal().toString().split(' ')[0]}'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.pushNamed(context, '/test-detail', arguments: {'testId': t.id}),
-                )).toList(),
-              );
-            },
-          ),
-        ],
+            _drawerItem(context, Icons.home, L10n.t('home', lang), '/home'),
+            _drawerItem(context, Icons.science, L10n.t('tests', lang), '/home'),
+            _drawerItem(context, Icons.inventory_2, L10n.t('packages', lang), '/packages'),
+            _drawerItem(context, Icons.newspaper, L10n.t('news', lang), '/news'),
+            _drawerItem(context, Icons.assignment, L10n.t('results', lang), '/home'),
+            _drawerItem(context, Icons.person, L10n.t('profile', lang), '/profile'),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: Text(L10n.t('logout', lang)),
+              onTap: () {
+                auth.logout();
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+            ),
+          ],
+        ),
       ),
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatItem({required this.icon, required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-      ],
-    );
-  }
-}
-
-class _TestsTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Tests')),
-      body: Consumer<TestProvider>(
-        builder: (ctx, tp, _) {
-          if (tp.loading) return const Center(child: CircularProgressIndicator());
-          if (tp.tests.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.science_outlined, size: 64, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  Text('No tests found', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
-                ],
-              ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: tp.tests.length,
-            itemBuilder: (ctx, i) {
-              final t = tp.tests[i];
-              return Card(
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: t.status == 'completed' ? Colors.green[100] : Colors.blue[100],
-                    child: Icon(
-                      t.status == 'completed' ? Icons.check_circle : Icons.pending,
-                      color: t.status == 'completed' ? Colors.green : Colors.blue,
-                    ),
-                  ),
-                  title: Text(t.testName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text('${t.status.replaceAll('_', ' ')} - ${t.orderedDate.toLocal().toString().split(' ')[0]}'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.pushNamed(context, '/test-detail', arguments: {'testId': t.id}),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ProfileTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: ListView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const SizedBox(height: 16),
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: theme.colorScheme.primaryContainer,
-            child: Text(
-              '${auth.user?.firstName?[0] ?? ''}${auth.user?.lastName?[0] ?? ''}',
-              style: TextStyle(fontSize: 28, color: theme.colorScheme.onPrimaryContainer),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(auth.user?.fullName ?? '', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(auth.user?.email ?? '', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
-          const SizedBox(height: 32),
-
-          Card(
-            child: Column(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Quick Actions
+            Row(
               children: [
-                ListTile(leading: const Icon(Icons.person_outline), title: const Text('Personal Information'), trailing: const Icon(Icons.chevron_right), onTap: () {}),
-                const Divider(height: 1),
-                ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), trailing: const Icon(Icons.chevron_right), onTap: () {}),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text('Logout', style: TextStyle(color: Colors.red)),
-                  onTap: () {
-                    auth.logout();
-                    Navigator.pushReplacementNamed(context, '/login');
-                  },
-                ),
+                Expanded(child: _quickActionCard(context, Icons.science, L10n.t('book_test', lang), Colors.indigo, '/home')),
+                const SizedBox(width: 12),
+                Expanded(child: _quickActionCard(context, Icons.inventory_2, L10n.t('view_packages', lang), Colors.purple, '/packages')),
               ],
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _quickActionCard(context, Icons.assignment, L10n.t('my_results', lang), Colors.teal, '/home')),
+                const SizedBox(width: 12),
+                Expanded(child: _quickActionCard(context, Icons.newspaper, L10n.t('news', lang), Colors.orange, '/news')),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Recent Tests
+            Text(L10n.t('tests', lang), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            ...List.generate(3, (i) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: i == 0 ? Colors.green[50] : Colors.amber[50],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(i == 0 ? Icons.check_circle : Icons.pending, color: i == 0 ? Colors.green : Colors.amber),
+                ),
+                title: Text(['Complete Blood Count', 'Lipid Profile', 'Blood Glucose'][i], style: const TextStyle(fontSize: 14)),
+                subtitle: Text(['Completed - Jan 15, 2024', 'Pending - Jan 20, 2024', 'In Progress'][i], style: const TextStyle(fontSize: 12)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.pushNamed(context, '/test-detail', arguments: {'testId': 'test-$i'}),
+              ),
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickActionCard(BuildContext context, IconData icon, String label, Color color, String route) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.pushNamed(context, route),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(height: 8),
+              Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerItem(BuildContext context, IconData icon, String label, String route) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(label),
+      onTap: () {
+        Navigator.pop(context);
+        if (route != '/home') Navigator.pushNamed(context, route);
+      },
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, _MedLabAppState locale) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Text('🇬🇧', style: TextStyle(fontSize: 24)),
+            title: const Text('English'),
+            onTap: () { locale.setLocale(const Locale('en')); Navigator.pop(ctx); },
+          ),
+          ListTile(
+            leading: const Text('🇸🇦', style: TextStyle(fontSize: 24)),
+            title: const Text('العربية'),
+            onTap: () { locale.setLocale(const Locale('ar')); Navigator.pop(ctx); },
+          ),
+          ListTile(
+            leading: const Text('🏳️', style: TextStyle(fontSize: 24)),
+            title: const Text('کوردی سۆرانی'),
+            onTap: () { locale.setLocale(const Locale('ckb')); Navigator.pop(ctx); },
+          ),
+          ListTile(
+            leading: const Text('🏳️', style: TextStyle(fontSize: 24)),
+            title: const Text('Kurmancî'),
+            onTap: () { locale.setLocale(const Locale('kmr')); Navigator.pop(ctx); },
           ),
         ],
       ),

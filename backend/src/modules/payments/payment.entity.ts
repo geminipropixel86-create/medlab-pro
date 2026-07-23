@@ -20,6 +20,13 @@ export enum PaymentMethod {
   UPI = 'upi',
 }
 
+export enum PaymentType {
+  INCOME = 'income',
+  EXPENSE = 'expense',
+  PAYMENT = 'payment',
+  REFUND = 'refund',
+}
+
 @Entity('payments')
 export class Payment {
   @PrimaryGeneratedColumn('uuid')
@@ -49,6 +56,12 @@ export class Payment {
 
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
   status: PaymentStatus;
+
+  @Column({ type: 'enum', enum: PaymentType, default: PaymentType.INCOME })
+  type: PaymentType;
+
+  @Column({ length: 500, nullable: true })
+  description: string;
 
   @Column({ type: 'enum', enum: PaymentMethod, default: PaymentMethod.CASH })
   paymentMethod: PaymentMethod;

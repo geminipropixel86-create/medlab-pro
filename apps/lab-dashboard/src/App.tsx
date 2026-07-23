@@ -7,6 +7,8 @@ import Patients from './pages/Patients';
 import Tests from './pages/Tests';
 import Results from './pages/Results';
 import Pricing from './pages/Pricing';
+import Packages from './pages/Packages';
+import News from './pages/News';
 import Reports from './pages/Reports';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -31,6 +33,8 @@ export default function App() {
         <Route path="tests" element={<Tests />} />
         <Route path="results" element={<Results />} />
         <Route path="pricing" element={<Pricing />} />
+        <Route path="packages" element={<Packages />} />
+        <Route path="news" element={<News />} />
         <Route path="reports" element={<Reports />} />
       </Route>
     </Routes>

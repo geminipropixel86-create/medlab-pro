@@ -17,6 +17,8 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { PricingModule } from './modules/pricing/pricing.module';
 import { OffersModule } from './modules/offers/offers.module';
 import { ContentModule } from './modules/content/content.module';
+import { PackagesModule } from './modules/packages/packages.module';
+import { NewsModule } from './modules/news/news.module';
 
 @Module({
   imports: [
@@ -85,6 +87,8 @@ import { ContentModule } from './modules/content/content.module';
     PricingModule,
     OffersModule,
     ContentModule,
+    PackagesModule,
+    NewsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

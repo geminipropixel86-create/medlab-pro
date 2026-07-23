@@ -8,6 +8,8 @@ import 'src/screens/login_screen.dart';
 import 'src/screens/home_screen.dart';
 import 'src/screens/test_detail_screen.dart';
 import 'src/screens/results_screen.dart';
+import 'src/screens/packages_screen.dart';
+import 'src/screens/news_screen.dart';
 import 'src/screens/profile_screen.dart';
 import 'src/l10n/l10n.dart';
 
@@ -16,8 +18,23 @@ void main() {
   runApp(const MedLabApp());
 }
 
-class MedLabApp extends StatelessWidget {
+class MedLabApp extends StatefulWidget {
   const MedLabApp({super.key});
+
+  @override
+  State<MedLabApp> createState() => _MedLabAppState();
+
+  static _MedLabAppState of(BuildContext context) {
+    return context.findAncestorStateOfType<_MedLabAppState>()!;
+  }
+}
+
+class _MedLabAppState extends State<MedLabApp> {
+  Locale _locale = const Locale('en');
+
+  void setLocale(Locale locale) {
+    setState(() => _locale = locale);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +46,10 @@ class MedLabApp extends StatelessWidget {
       child: MaterialApp(
         title: 'MedLab Pro',
         debugShowCheckedModeBanner: false,
+        locale: _locale,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF2563EB),
+            seedColor: const Color(0xFF6366F1),
             brightness: Brightness.light,
           ),
           useMaterial3: true,
@@ -53,6 +71,8 @@ class MedLabApp extends StatelessWidget {
           '/login': (ctx) => const LoginScreen(),
           '/home': (ctx) => const HomeScreen(),
           '/profile': (ctx) => const ProfileScreen(),
+          '/packages': (ctx) => const PackagesScreen(),
+          '/news': (ctx) => const NewsScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/test-detail') {
