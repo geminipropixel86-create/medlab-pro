@@ -15,13 +15,13 @@ export class NotificationsController {
 
   @Get()
   @ApiOperation({ summary: 'Get user notifications' })
-  getUserNotifications(@Req() req, @Query() query: any) {
+  getUserNotifications(@Req() req: any, @Query() query: any) {
     return this.service.getUserNotifications(req.user.id, query.page, query.limit);
   }
 
   @Get('unread-count')
   @ApiOperation({ summary: 'Get unread notification count' })
-  getUnreadCount(@Req() req) {
+  getUnreadCount(@Req() req: any) {
     return this.service.getUnreadCount(req.user.id);
   }
 
@@ -33,7 +33,7 @@ export class NotificationsController {
 
   @Put('read-all')
   @ApiOperation({ summary: 'Mark all notifications as read' })
-  markAllAsRead(@Req() req) {
+  markAllAsRead(@Req() req: any) {
     return this.service.markAllAsRead(req.user.id);
   }
 }

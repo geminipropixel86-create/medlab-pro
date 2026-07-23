@@ -15,7 +15,7 @@ export class TestsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new lab test' })
-  create(@Body() dto: any, @Req() req) {
+  create(@Body() dto: any, @Req() req: any) {
     return this.service.create(dto, req.user.id);
   }
 
@@ -45,7 +45,7 @@ export class TestsController {
 
   @Put(':id/status')
   @ApiOperation({ summary: 'Update test status' })
-  updateStatus(@Param('id') id: string, @Body('status') status: string, @Req() req) {
+  updateStatus(@Param('id') id: string, @Body('status') status: string, @Req() req: any) {
     return this.service.updateStatus(id, status as any, req.user.id);
   }
 

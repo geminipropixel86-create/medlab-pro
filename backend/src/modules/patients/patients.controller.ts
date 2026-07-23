@@ -15,7 +15,7 @@ export class PatientsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new patient' })
-  create(@Body() dto: any, @Req() req) {
+  create(@Body() dto: any, @Req() req: any) {
     return this.service.create(dto, req.user.id);
   }
 

@@ -1,6 +1,7 @@
 import {
   Controller, Post, Get, Body, UseGuards, Req,
 } from '@nestjs/common';
+import { IsEmail, IsString, IsOptional } from 'class-validator';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -8,20 +9,20 @@ import { Public } from '../../common/decorators/roles.decorator';
 import { Request } from 'express';
 
 class RegisterDto {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  password: string;
+  @IsString() firstName: string;
+  @IsString() lastName: string;
+  @IsEmail() email: string;
+  @IsString() @IsOptional() phone?: string;
+  @IsString() password: string;
 }
 
 class LoginDto {
-  email: string;
-  password: string;
+  @IsEmail() email: string;
+  @IsString() password: string;
 }
 
 class RefreshDto {
-  refreshToken: string;
+  @IsString() refreshToken: string;
 }
 
 @ApiTags('Authentication')
@@ -54,7 +55,7 @@ export class AuthController {
   @UseGuards(AuthGuard())
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  getProfile(@Req() req) {
+  getProfile(@Req() req: any) {
     return this.auth.getProfile(req.user.id);
   }
 }

@@ -39,7 +39,7 @@ export class ResultsController {
 
   @Put(':id/verify')
   @ApiOperation({ summary: 'Verify a test result' })
-  verify(@Param('id') id: string, @Req() req) {
+  verify(@Param('id') id: string, @Req() req: any) {
     return this.service.verify(id, req.user.id);
   }
 }

@@ -15,4 +15,4 @@ COPY --from=builder /app/package.json ./
 USER node
 EXPOSE 3000
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main.js"]

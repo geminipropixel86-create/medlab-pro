@@ -12,7 +12,11 @@ async function bootstrap() {
   const apiPrefix = process.env.API_PREFIX || 'api/v1';
 
   // Security
-  app.use(helmet.default);
+  app.use(helmet.default());
+
+  // Trust proxy (for Render, Railway, Fly.io behind load balancers)
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   app.enableCors({
     origin: (process.env.CORS_ORIGINS || 'http://localhost:5173').split(','),
     credentials: true,

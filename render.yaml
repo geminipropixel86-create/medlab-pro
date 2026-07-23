@@ -1,0 +1,63 @@
+# ─── Render Blueprint ─────────────────────────────────────
+# Deploy: https://dashboard.render.com/blueprints
+# 1. Push this repo to GitHub
+# 2. Go to Render Dashboard → Blueprint → Connect repo
+# 3. Fill in the env var values when prompted
+
+databases:
+  - name: medlab-pro-db
+    databaseName: medlab_pro
+    user: medlab_user
+    region: oregon
+    plan: free
+    ipAllowList: [] # allow only from internal services
+
+services:
+  - type: web
+    name: medlab-pro-api
+    runtime: node
+    repo: https://github.com/geminipropixel86-create/medlab-pro
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: node dist/src/main.js
+    healthCheckPath: /api/v1/docs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: API_PREFIX
+        value: api/v1
+      - key: DB_HOST
+        fromDatabase:
+          name: medlab-pro-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: medlab-pro-db
+          property: port
+      - key: DB_USERNAME
+        fromDatabase:
+          name: medlab-pro-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: medlab-pro-db
+          property: password
+      - key: DB_DATABASE
+        fromDatabase:
+          name: medlab-pro-db
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://your-dashboard.vercel.app,https://your-website.vercel.app
+      - key: STORAGE_TYPE
+        value: local
+      - key: THROTTLE_TTL
+        value: "60"
+      - key: THROTTLE_LIMIT
+        value: "100"

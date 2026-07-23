@@ -33,6 +33,7 @@ import { NewsModule } from './modules/news/news.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
+
         type: 'postgres',
         host: config.get('DB_HOST', 'localhost'),
         port: config.get<number>('DB_PORT', 5432),
@@ -44,7 +45,8 @@ import { NewsModule } from './modules/news/news.module';
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') === 'development',
         ssl: config.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
-      }),
+
+      } as any),
     }),
 
     // Redis Cache
@@ -53,7 +55,7 @@ import { NewsModule } from './modules/news/news.module';
       inject: [ConfigService],
       isGlobal: true,
       useFactory: (config: ConfigService) => ({
-        store: redisStore,
+        store: redisStore as any,
         host: config.get('REDIS_HOST', 'localhost'),
         port: config.get<number>('REDIS_PORT', 6379),
         password: config.get('REDIS_PASSWORD', ''),

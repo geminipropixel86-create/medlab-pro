@@ -5,7 +5,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { LabTest, TestStatus } from '../tests/test.entity';
 import { Patient } from '../patients/patient.entity';
 import { TestResult } from '../results/result.entity';
-import { Payment } from '../payments/payment.entity';
+import { Payment, PaymentType, PaymentStatus } from '../payments/payment.entity';
 
 @Injectable()
 export class ReportsService {
@@ -26,8 +26,8 @@ export class ReportsService {
         this.testRepo.count(),
         this.testRepo.count({ where: { status: TestStatus.COMPLETED } }),
         this.testRepo.count({ where: { status: TestStatus.PENDING } }),
-        this.paymentRepo.count({ where: { status: 'completed' } }),
-        this.paymentRepo.count({ where: { type: 'expense' } }),
+        this.paymentRepo.count({ where: { status: PaymentStatus.COMPLETED } }),
+        this.paymentRepo.count({ where: { type: PaymentType.EXPENSE } }),
       ]);
 
     const revenue = await this.paymentRepo
@@ -39,7 +39,7 @@ export class ReportsService {
     const expenses = await this.paymentRepo
       .createQueryBuilder('p')
       .select('COALESCE(SUM(p.amount), 0)', 'total')
-      .where('p.type = :type', { type: 'expense' })
+      .where('p.type = :type', { type: PaymentType.EXPENSE })
       .getRawOne();
 
     return {
@@ -62,7 +62,7 @@ export class ReportsService {
 
     const payments = await this.paymentRepo.find({ where, order: { createdAt: 'DESC' } });
     const income = payments.filter(p => p.type === 'payment' || p.type === 'income');
-    const outcome = payments.filter(p => p.type === 'expense' || p.type === 'refund');
+    const outcome = payments.filter(p => p.type === PaymentType.EXPENSE || p.type === PaymentType.REFUND);
 
     return {
       period: { startDate, endDate },
@@ -168,7 +168,7 @@ export class ReportsService {
     }
   }
 
-  @Cron(CronExpression.EVERY_WEEK_ON_MONDAY_AT_9AM)
+  @Cron('0 9 * * 1') // Every Monday at 9 AM
   async sendWeeklyReports() {
     this.logger.log('Generating weekly reports for subscribers...');
     for (const [id, sub] of this.emailSubscribers) {
